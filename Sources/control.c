@@ -94,6 +94,7 @@ struct{
 }diagnostics;
 
 static uint16_t test_lin;
+bool side_mem_lin_enable;
 
 /* Debug variables */
 
@@ -250,6 +251,8 @@ uint8_t command_extract(void){
 		if(l_flg_tst_LI0_MemNumber_flag()){
 			l_flg_clr_LI0_MemNumber_flag();
 			input.set.MemNumber=(uint8_t)l_u8_rd_LI0_MemNumber();
+			if (input.set.MemNumber)
+				side_mem_lin_enable = TRUE;	
 		}
 		/* Get Energy save profile */
 		if(l_flg_tst_LI0_BCM_EEM_flag()){
@@ -537,6 +540,7 @@ void command_execute(void){
 	static uint8_t adj_access=(uint8_t)0U;
 	static uint8_t mem_s_flag=(uint8_t)0U;
 	static uint32_t notch=0UL;
+	static bool side_support_activated = FALSE;
 	/***/
 	if(input.any_key||input.any_cmd||adj_access){
 		if(input.any_key||input.any_cmd){
@@ -660,10 +664,13 @@ void command_execute(void){
 	}
 	if(!((massage_st.msg_on||side_s_st.active)||
 		 (lumbar_st.transit||lumbar_st.active))){
-		if(input.pne.Sidesupport_on){
+		if(input.pne.Sidesupport_on)
+		{
+			side_support_activated = TRUE;
 			 side_s_st.transit=apply_side_support(side_s_st.memory,input.any_cmd);
 		}
-		else side_s_st.transit=apply_side_support((uint8_t)0U,(uint8_t)0U);
+		else if (side_support_activated) 
+			side_s_st.transit=apply_side_support((uint8_t)0U,(uint8_t)0U);
 	}
 	
 #endif

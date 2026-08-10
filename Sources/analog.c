@@ -146,7 +146,7 @@ interrupt VectorNumber_Vadc0err adc_error(void){
 /**
  * @Brief Identify sequence problems. 
  */
-interrupt VectorNumber_Vadc0conv_seq_abrt abort(void){ 
+interrupt VectorNumber_Vadc0conv_seq_abrt abort_adc(void){ 
 	identify_err=ADC0IF;
 	identify_err=identify_err; /* Dummy line for debugger breakpoint */
 	return;

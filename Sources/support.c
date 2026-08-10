@@ -10,6 +10,7 @@
 #include "support.h"
 
 sides_pr_t sides_pr;
+extern bool side_mem_lin_enable;
 
 static struct{
 	uint8_t b_latch;
@@ -256,6 +257,11 @@ uint8_t apply_side_support(uint8_t mem_set, uint8_t invasion){
 	uint8_t flip_order=(uint8_t)0U;
 	uint16_t buffer;
 	/****/
+	
+	if (!side_mem_lin_enable)
+				return 0;
+	
+	
 	if(mem_set>MEM_SETINGS_MAX)return run;
 	if(drain.open|drain.exit){
 		if(!drain.exit){
