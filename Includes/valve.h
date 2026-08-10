@@ -104,7 +104,7 @@ extern mem_status_t mem_status;
 /**********************************/
 
 /**** Functions prototypes ********/
-uint8_t spi_tx_word(int16_t, uint16_t);
+void spi_tx_word(int16_t, uint16_t);
 uint8_t get_dtcs_status(void);						/* Get DCTs flags pending for alarm in LIN reply frame */
 uint8_t get_valve_diagnostics(int16_t, uint8_t);	/* Return specially compiled byte for Report (valve diagnostics) based on SPI return data. */
 uint8_t pneumatic_drain(int16_t);

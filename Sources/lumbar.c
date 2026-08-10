@@ -101,32 +101,32 @@ uint16_t lmb_press_max;
 void read_lumbar(void){
 	/* Get upper bag pressure */
 	lumbar.val.upp_fill=(uint8_t)1U;
-	__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
+	spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
 	for(;__SPI_STATE->busy;){};
 	ms_halt(ISOLATE_P_SENS);
 	lmb_press.upper=air_pressure();
 	lumbar.feed_cmd=(uint8_t)0U;
-	__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
+	spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
 	for(;__SPI_STATE->busy;){};
 	ms_halt(ISOLATE_P_SENS);
 	/* Get middle bag pressure */
 	lumbar.val.mid_fill=(uint8_t)1U;
-	__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
+	spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
 	for(;__SPI_STATE->busy;){};
 	ms_halt(ISOLATE_P_SENS);
 	lmb_press.middl=air_pressure();
 	lumbar.feed_cmd=(uint8_t)0U;
-	__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
+	spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
 	for(;__SPI_STATE->busy;){};
 	ms_halt(ISOLATE_P_SENS);
 	/* Get lower bag pressure */
 	lumbar.val.low_fill=(uint8_t)1U;
-	__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
+	spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
 	for(;__SPI_STATE->busy;){};
 	ms_halt(ISOLATE_P_SENS);
 	lmb_press.lower=air_pressure();
 	lumbar.feed_cmd=(uint8_t)0U;
-	__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
+	spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lumbar.feed_cmd);
 	for(;__SPI_STATE->busy;){};
 	ms_halt(ISOLATE_P_SENS);
 	
@@ -361,7 +361,7 @@ uint8_t apply_lumbar(uint8_t mem_set, uint8_t invasion){
 						switch(exit){
 							case (uint8_t)1U:
 								msg_1R.valve.drain=(uint8_t)1U;
-								__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+								spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 								msg_1R.valve.drain=(uint8_t)0U;
 								notch=__get_millis;
 								exit++;
@@ -385,7 +385,7 @@ uint8_t apply_lumbar(uint8_t mem_set, uint8_t invasion){
 								exit++;
 							break;
 							case (uint8_t)4U:
-								__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+								spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 								notch=__get_millis;
 								exit++;
 							break;
@@ -690,7 +690,7 @@ uint8_t apply_lumbar(uint8_t mem_set, uint8_t invasion){
 		/***/
 		if(lmb_feed^lumbar.feed_cmd){
 			lmb_feed=lumbar.feed_cmd;
-			__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lmb_feed);
+			spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lmb_feed);
 			pressure_hoarder((uint8_t)0U,_ON_);
 			valid=(uint8_t)0U;
 			notch=__get_millis;
@@ -1272,7 +1272,7 @@ uint8_t adjust_lumbar /* TODO: Requires earlier planned updates */
 				lmb_inlt=inlets;
 			}
 			//notch=__get_millis;
-			__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lmb_feed);
+			spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)lmb_feed);
 		}
 		else if(ms_from(notch)>ISOLATE_PUMP_W){
 			 switch(operate){
@@ -1283,18 +1283,18 @@ uint8_t adjust_lumbar /* TODO: Requires earlier planned updates */
 					}
 					if(measure==(uint8_t)1U){
 						msg_1R.valve.drain=(uint8_t)1U;
-						__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+						spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 						msg_1R.valve.drain=(uint8_t)0U;
 						measure++;
 					}
 					else if(exclude){
 						if(measure==(uint8_t)7U){
-							__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+							spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 							measure++;
 						}
 					}
 					else if(measure==(uint8_t)9U){
-						__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+						spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 						measure++;	
 					}
 					//slide=pressure_hoarder(((uint8_t)0U),_RUN_); // Update 06.06.2023

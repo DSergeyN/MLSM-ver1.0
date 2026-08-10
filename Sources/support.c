@@ -55,22 +55,22 @@ static void balance_ssb(int16_t target, uint8_t duration){
 	switch(target){
 		case _BACK_:
 			msg_1R.valve.backrest_l=msg_1R.valve.backrest_r=(uint8_t)1U;
-			__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+			spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 			for(;__SPI_STATE->busy;){};
 			ms_halt((uint32_t)duration*BASE_PNUMO_TIM);
 			msg_1R.valve.backrest_l=msg_1R.valve.backrest_r=(uint8_t)0U;
-			__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+			spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 			for(;__SPI_STATE->busy;){};
 			ms_halt(ISOLATE_P_SENS);
 			
 		break;
 		case _CUSH_:
 			msg_2L.valve.cushion_l=msg_2L.valve.cushion_r=(uint8_t)1U;
-			__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
+			spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
 			for(;__SPI_STATE->busy;){};
 			ms_halt((uint32_t)duration*BASE_PNUMO_TIM);
 			msg_2L.valve.cushion_l=msg_2L.valve.cushion_r=(uint8_t)0U;
-			__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
+			spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
 			for(;__SPI_STATE->busy;){};
 			ms_halt(ISOLATE_P_SENS);
 		break;
@@ -98,22 +98,22 @@ void read_side_s(void){
 		if(++i>ATTEMPTS_BAL)break;
 		/* Get backrest left bag pressure */
 		msg_1R.valve.backrest_l=(uint8_t)1U;
-		__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+		spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 		for(;__SPI_STATE->busy;){};
 		ms_halt(ISOLATE_P_SENS);
 		pressure.back_l=air_pressure();
 		msg_1R.feed_cmd=(uint8_t)0U;
-		__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+		spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 		for(;__SPI_STATE->busy;){};
 		ms_halt(ISOLATE_P_SENS);
 		/* Get backrest right bag pressure */
 		msg_1R.valve.backrest_r=(uint8_t)1U;
-		__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+		spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 		for(;__SPI_STATE->busy;){};
 		ms_halt(ISOLATE_P_SENS);
 		pressure.back_r=air_pressure();
 		msg_1R.feed_cmd=(uint8_t)0U;
-		__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+		spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 		for(;__SPI_STATE->busy;){};
 		ms_halt(ISOLATE_P_SENS);
 		/* Compare backrest pressures, balance bags if significant error */
@@ -138,22 +138,22 @@ void read_side_s(void){
 		if(++i>ATTEMPTS_BAL)break;
 		/* Get cushion left bag pressure */
 		msg_2L.valve.cushion_l=(uint8_t)1U;
-		__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
+		spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
 		for(;__SPI_STATE->busy;){};
 		ms_halt(ISOLATE_P_SENS);
 		pressure.cush_l=air_pressure();
 		msg_2L.feed_cmd=(uint8_t)0U;
-		__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
+		spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
 		for(;__SPI_STATE->busy;){};
 		ms_halt(ISOLATE_P_SENS);
 		/* Get cushion right bag pressure */
 		msg_2L.valve.cushion_r=(uint8_t)1U;
-		__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
+		spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
 		for(;__SPI_STATE->busy;){};
 		ms_halt(ISOLATE_P_SENS);
 		pressure.cush_r=air_pressure();
 		msg_2L.feed_cmd=(uint8_t)0U;
-		__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
+		spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
 		for(;__SPI_STATE->busy;){};
 		ms_halt(ISOLATE_P_SENS);
 		/* Compare backrest pressures, balance bags if significant error */
@@ -174,11 +174,11 @@ void read_side_s(void){
 	sides_pr.cushion=(pressure.cush_l+pressure.cush_r)/(uint8_t)2U;
 	/* Deflat system */
 	msg_1R.valve.drain=(uint8_t)1U;
-	__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+	spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 	for(;__SPI_STATE->busy;){};
 	ms_halt(ISOLATE_P_SENS);
 	msg_1R.feed_cmd=(uint8_t)0U;
-	__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+	spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 	for(;__SPI_STATE->busy;){};
 	ms_halt(ISOLATE_P_SENS);
 	
@@ -358,14 +358,14 @@ uint8_t apply_side_support(uint8_t mem_set, uint8_t invasion){
 							switch(exit){
 								case (uint8_t)1U:
 									msg_1R.valve.drain=(uint8_t)1U;
-									__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+									spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 									msg_1R.valve.drain=(uint8_t)0U;
 									notch=__get_millis;
 									exit++;
 								break;
 								case (uint8_t)2U:
 									if(ms_from(notch)>=(__ONLY_P_SENSE*2UL)){
-										__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+										spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
 										notch=__get_millis;
 										exit++;
 									}
@@ -660,14 +660,14 @@ uint8_t apply_side_support(uint8_t mem_set, uint8_t invasion){
 		/***/
 		if((feed_cmd_r^msg_1R.feed_cmd)&&(!flip_order)){		
 			feed_cmd_r=msg_1R.feed_cmd;
-			__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)feed_cmd_r);
+			spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)feed_cmd_r);
 			notch=__get_millis;
 			modified=(uint8_t)1U;
 			valid=(uint8_t)0U;
 		}
 		else if(feed_cmd_l^msg_2L.feed_cmd){
 			feed_cmd_l=msg_2L.feed_cmd;
-			__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)feed_cmd_l);
+			spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)feed_cmd_l);
 			notch=__get_millis;
 			modified=(uint8_t)1U;
 			valid=(uint8_t)0U;
@@ -865,13 +865,13 @@ uint8_t adjust_side_support(uint8_t backrest, uint8_t cushion){
 		}
 		if(feed_cmd_r^msg_1R.feed_cmd){
 			feed_cmd_r=msg_1R.feed_cmd;
-			__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)feed_cmd_r);
+			spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)feed_cmd_r);
 			notch=__get_millis;
 			modified=(uint8_t)1U;
 		}
 		else if(feed_cmd_l^msg_2L.feed_cmd){
 			feed_cmd_l=msg_2L.feed_cmd;
-			__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)feed_cmd_l);
+			spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)feed_cmd_l);
 			notch=__get_millis;
 			modified=(uint8_t)1U;
 		}

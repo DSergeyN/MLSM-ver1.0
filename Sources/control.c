@@ -334,7 +334,7 @@ uint8_t command_extract(void){
 		}
 		/* Get massage intensity setting */
 		if(l_flg_tst_LI0_Massage_intensity_flag()){
-			l_flg_clr_LI0_Massage_on_flag();
+			l_flg_clr_LI0_Massage_intensity_flag();
 			input.pne.Massage_intensity=(uint8_t)l_u8_rd_LI0_Massage_intensity();
 		}
 		/* Get massage program setting */

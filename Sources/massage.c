@@ -328,10 +328,10 @@ uint8_t msg_run(uint8_t process){
 				suppress=(uint8_t)1U;
 				if(unfold){
 					if(feed_righ){
-						__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)(feed_righ=(uint8_t)0U));
+						spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)(feed_righ=(uint8_t)0U));
 					}
 					else if(feed_left){
-						__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)(feed_left=(uint8_t)0U));
+						spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)(feed_left=(uint8_t)0U));
 					}
 					else{
 						/* Stop pump from here */
@@ -357,7 +357,7 @@ uint8_t msg_run(uint8_t process){
 #else
 				feed_righ=msg_1R.feed_cmd;
 #endif
-				__SPI_STATE->busy=spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)feed_righ);
+				spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)feed_righ);
 			}
 			else if(feed_left^(msg_2L.feed_cmd)){
 #if(0)
@@ -365,7 +365,7 @@ uint8_t msg_run(uint8_t process){
 #else
 				feed_left=msg_2L.feed_cmd;
 #endif			
-				__SPI_STATE->busy=spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)feed_left);				
+				spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)feed_left);				
 			}
 			else if(sequence.arm||(msg_state.timer<=msg_state.period)){
 				{	/* R side */

@@ -115,7 +115,7 @@ void test_spi_tx(uint16_t data){ /* Remove this garbage */
 	return;
 }
 
-uint8_t spi_tx_word(int16_t target, uint16_t data){
+void spi_tx_word(int16_t target, uint16_t data){
 	static uint8_t msg_1r_valves=(uint8_t)0U;
 	static uint8_t lmb_ns_valves=(uint8_t)0U;
 	static uint8_t msg_2l_valves=(uint8_t)0U;
@@ -133,7 +133,7 @@ uint8_t spi_tx_word(int16_t target, uint16_t data){
 			__FETCH_MSG2_L;
 			if((data&0xFF00U)==SPI_CMD_VALVE)msg_2l_valves=(uint8_t)(data&0x00FFU);
 		break;
-		default: return (uint8_t)0U;
+		default: return;
 	}
 	if(msg_1r_valves||lmb_ns_valves||msg_2l_valves){
 		 valves_open=1U;
@@ -141,7 +141,7 @@ uint8_t spi_tx_word(int16_t target, uint16_t data){
 	else valves_open=0U;		
 	SPI0DR=data;
 	__ARM_SPI_t;
-	return (uint8_t)1U;
+	spi_work.busy = 1;
 }
 
 /**
@@ -717,7 +717,7 @@ uint8_t operation_mode(int16_t toggle, uint8_t memory){ 	// TODO: Add Side suppo
 			}
 			if(feed^lumbar.feed_cmd){
 				feed=lumbar.feed_cmd;
-				__SPI_STATE->busy=spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)feed);
+				spi_tx_word(_V_LMB,SPI_CMD_VALVE|(uint16_t)feed);
 			}	 
 		}
 	}	
