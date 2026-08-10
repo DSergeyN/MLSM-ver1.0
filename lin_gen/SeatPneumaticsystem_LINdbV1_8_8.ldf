@@ -1,0 +1,237 @@
+/*---------GLOBAL DEFINITIONS-----------*/
+LIN_description_file;
+LIN_protocol_version             = "2.1";
+LIN_language_version             = "2.1";
+LIN_speed                        = 19.2 kbps;
+/* ----------NODE DEFINITIONS---------- */
+Nodes {
+   Master:
+      SMM,                                                   /* Master node name */
+      5.0 ms,                                                /* Time base */
+      0.1 ms;                                                /* Jitter */
+   Slaves:
+      SSW,
+      pNsystem;
+}
+/* ----------SIGNAL DEFINITIONS---------- */
+Signals {
+   /* Signal_name                : Size,       Init,            Publisher, Subscriber(s) */
+   MemSave_flag                  :  1,        0x0,                  SMM, pNsystem;
+   MemNumber                     :  2,        0x0,                  SMM, pNsystem;
+   MuteSSWLeds                   :  1,        0x0,                  SMM, SSW;
+   BCM_EEM                       :  4,        0x0,                  SMM, SSW,pNsystem;
+   sigSSWLinError                :  1,        0x0,                  SSW, SMM,pNsystem;
+   Seat_Id                       :  3,        0x0,                  SMM, SSW,pNsystem;
+   Seat_Var                      :  5,        0x0,                  SMM, SSW,pNsystem;
+   LumbarHeadUp                  :  1,        0x0,                  SMM, pNsystem;
+   LumbarHeadIncrease            :  1,        0x0,                  SMM, pNsystem;
+   LumbarHeadDown                :  1,        0x0,                  SMM, pNsystem;
+   LumbarHeadDecrease            :  1,        0x0,                  SMM, pNsystem;
+   CabinAmbientTemp              :  6,        0x0,                  SMM, pNsystem;
+   Massage_on                    :  1,        0x0,                  SMM, pNsystem;
+   Massage_intensity             :  2,        0x0,                  SMM, pNsystem;
+   Massage_program               :  3,        0x0,                  SMM, pNsystem;
+   Sidesupport_on                :  1,        0x0,                  SMM, pNsystem;
+   Sidesupport_backrest          :  2,        0x0,                  SMM, pNsystem;
+   Sidesupport_cushion           :  2,        0x0,                  SMM, pNsystem;
+   Int_Diagnostics               :  4,        0x0,                  SMM, pNsystem;
+   Side_Acceleration             :  6,        0x0,                  SMM, pNsystem;
+   sigpNsystemLinError           :  1,        0x0,             pNsystem, SMM;
+   Diagnostics_Code              :  4,        0x0,             pNsystem, SMM;
+   DTCs_Pending                  :  1,        0x0,             pNsystem, SMM;
+   Diagnostics_Ctr               :  2,        0x0,             pNsystem, SMM;
+   Data_Register                 :  8,        0x0,             pNsystem, SMM;
+   Pillow_down                   :  1,        0x0,                  SSW, SMM;
+   Pillow_up                     :  1,        0x0,                  SSW, SMM;
+   Seat_back                     :  1,        0x0,                  SSW, SMM;
+   Seat_down                     :  1,        0x0,                  SSW, SMM;
+   Seat_forward                  :  1,        0x0,                  SSW, SMM;
+   Seat_up                       :  1,        0x0,                  SSW, SMM;
+   SeatSlope_up                  :  1,        0x0,                  SSW, SMM;
+   SeatSlope_down                :  1,        0x0,                  SSW, SMM;
+   Seatback_back                 :  1,        0x0,                  SSW, SMM;
+   Seatback_forward              :  1,        0x0,                  SSW, SMM;
+   Storeposition                 :  1,        0x0,                  SSW, SMM;
+   Sw_mulmedia                   :  1,        0x0,                  SSW, SMM;
+   Sw_RRctrl                     :  1,        0x0,                  SSW, SMM;
+   Pillow_front                  :  1,        0x0,                  SSW, SMM;
+   Pillow_back                   :  1,        0x0,                  SSW, SMM;
+   Mem_position                  :  2,        0x0,                  SSW, SMM;
+   Mem_ButtonLongPress           :  1,        0x0,                  SSW, SMM;
+   Mem_LEDsState                 :  1,        0x0,                  SSW, SMM;
+   SSW_ReservedBit               :  1,        0x0,                  SSW, SMM;
+   SSW_dtc_sts                   :  1,        0x0,                  SSW, SMM;
+   LumbarCtrUp                   :  1,        0x0,                  SSW, SMM,pNsystem;
+   LumbarCtrIncrease             :  1,        0x0,                  SSW, SMM,pNsystem;
+   LumbarCtrDown                 :  1,        0x0,                  SSW, SMM,pNsystem;
+   LumbarCtrDecrease             :  1,        0x0,                  SSW, SMM,pNsystem;
+   ComfortKey                    :  1,        0x0,                  SSW, SMM;
+   Upproj                        :  2,        0x0,                  SMM, SSW,pNsystem;
+   startaddr                     :  8,        0x0,                  SMM, SSW,pNsystem;
+}
+/* ----------DIAGNOSTIC SIGNAL DEFINITIONS---------- */
+Diagnostic_signals {
+   /* MasterReq Reserved Signals */
+   MasterReqB0         :    8,   0;
+   MasterReqB1         :    8,   0;
+   MasterReqB2         :    8,   0;
+   MasterReqB3         :    8,   0;
+   MasterReqB4         :    8,   0;
+   MasterReqB5         :    8,   0;
+   MasterReqB6         :    8,   0;
+   MasterReqB7         :    8,   0;
+   /* SlaveResp Reserved Signals */
+   SlaveRespB0         :    8,   0;
+   SlaveRespB1         :    8,   0;
+   SlaveRespB2         :    8,   0;
+   SlaveRespB3         :    8,   0;
+   SlaveRespB4         :    8,   0;
+   SlaveRespB5         :    8,   0;
+   SlaveRespB6         :    8,   0;
+   SlaveRespB7         :    8,   0;
+}
+/* ----------UNCONDITIONAL FRAME DEFINITIONS---------- */
+Frames {
+   SMM_brdcst          :  0x1, SMM                 ,    4 {
+      MemSave_flag        , 0;
+      MemNumber           , 1;
+      MuteSSWLeds         , 3;
+      BCM_EEM             , 4;
+      Seat_Id             , 8;
+      Seat_Var            , 11;
+      LumbarHeadUp        , 16;
+      LumbarHeadIncrease  , 17;
+      LumbarHeadDown      , 18;
+      LumbarHeadDecrease  , 19;
+      Int_Diagnostics     , 20;
+      CabinAmbientTemp    , 24;
+   }
+   pNsystem_ctr        :  0xb, SMM                 ,    3 {
+      Massage_on          , 0;
+      Massage_intensity   , 1;
+      Massage_program     , 3;
+      Sidesupport_on      , 6;
+      Sidesupport_backrest, 8;
+      Sidesupport_cushion , 10;
+      Side_Acceleration   , 12;
+   }
+   pNsystem_ans        : 0x15, pNsystem            ,    2 {
+      Diagnostics_Code    , 0;
+      DTCs_Pending        , 4;
+      sigpNsystemLinError , 5;
+      Diagnostics_Ctr     , 6;
+      Data_Register       , 8;
+   }
+   Seatsetting         :  0xa, SSW                 ,    4 {
+      Seat_up             , 0;
+      Seat_down           , 1;
+      Seat_forward        , 2;
+      Seat_back           , 3;
+      Seatback_forward    , 4;
+      Seatback_back       , 5;
+      Pillow_up           , 6;
+      Pillow_down         , 7;
+      Storeposition       , 8;
+      Sw_mulmedia         , 9;
+      Sw_RRctrl           , 10;
+      Pillow_front        , 11;
+      Pillow_back         , 12;
+      SeatSlope_up        , 13;
+      SeatSlope_down      , 14;
+      SSW_dtc_sts         , 16;
+      Mem_position        , 17;
+      sigSSWLinError      , 23;
+      LumbarCtrUp         , 24;
+      LumbarCtrIncrease   , 25;
+      LumbarCtrDown       , 26;
+      LumbarCtrDecrease   , 27;
+      ComfortKey          , 28;
+      Mem_ButtonLongPress , 29;
+      Mem_LEDsState       , 30;
+      SSW_ReservedBit     , 31;
+   }
+   Ubootbrd            : 0x19, SMM                 ,    2 {
+      Upproj              , 0;
+   }
+   staddrbrd           : 0x1a, SMM                 ,    2 {
+      startaddr           , 0;
+   }
+}
+/* ----------DIAGNOSTIC FRAME DEFINITIONS---------- */
+Diagnostic_frames {
+   MasterReq           : 0x3c {
+      MasterReqB0         , 0;
+      MasterReqB1         , 8;
+      MasterReqB2         , 16;
+      MasterReqB3         , 24;
+      MasterReqB4         , 32;
+      MasterReqB5         , 40;
+      MasterReqB6         , 48;
+      MasterReqB7         , 56;
+   }
+   SlaveResp           : 0x3d {
+      SlaveRespB0         , 0;
+      SlaveRespB1         , 8;
+      SlaveRespB2         , 16;
+      SlaveRespB3         , 24;
+      SlaveRespB4         , 32;
+      SlaveRespB5         , 40;
+      SlaveRespB6         , 48;
+      SlaveRespB7         , 56;
+   }
+}
+/* ----------NODE ATTRIBUTE DEFINITIONS---------- */
+Node_attributes {
+   SSW {
+      LIN_protocol               = "2.1";                    /* Node protocol version */
+      configured_NAD             = 0x2;                      /* configured NAD of node (1-125) */
+      initial_NAD                = 0x2;                      /* initial NAD of node (1-125) */
+      product_id                 =   0x1e,    0x2,    0x1;   /* Product id */
+      response_error             = sigSSWLinError;           /* Response error signal */
+      P2_min                     = 100 ms;                   /* P2_min */
+      ST_min                     = 0 ms;                     /* ST_min */
+      N_As_timeout               = 1000 ms;                  /* N_As timeout value */
+      N_Cr_timeout               = 1000 ms;                  /* N_Cr timeout value */
+      configurable_frames {
+         SMM_brdcst;
+         Seatsetting;
+         Ubootbrd;
+         staddrbrd;
+      }
+   }
+   pNsystem {
+      LIN_protocol               = "2.1";                    /* Node protocol version */
+      configured_NAD             = 0x6;                      /* configured NAD of node (1-125) */
+      initial_NAD                = 0x1;                      /* initial NAD of node (1-125) */
+      product_id                 =   0x1e,    0x1,    0x0;   /* Product id */
+      response_error             = sigpNsystemLinError;      /* Response error signal */
+      P2_min                     = 50 ms;                    /* P2_min */
+      ST_min                     = 0 ms;                     /* ST_min */
+      N_As_timeout               = 1000 ms;                  /* N_As timeout value */
+      N_Cr_timeout               = 1000 ms;                  /* N_Cr timeout value */
+      configurable_frames {
+         SMM_brdcst;
+         pNsystem_ctr;
+         pNsystem_ans;
+         Seatsetting;
+         Ubootbrd;
+         staddrbrd;
+      }
+   }
+}
+/* ----------SCHEDULE TABLE DEFINITIONS---------- */
+Schedule_tables {
+   Normal_Table {
+      SMM_brdcst                          delay 15.0 ms;
+      Seatsetting                         delay 25.0 ms;
+      pNsystem_ctr                        delay 20.0 ms;
+      pNsystem_ans                        delay 20.0 ms;
+   }
+   ErrorTable1_CorruptedSchedule {
+      SMM_brdcst                          delay 15.0 ms;
+      Seatsetting                         delay 25.0 ms;
+      pNsystem_ctr                        delay 20.0 ms;
+      pNsystem_ans                        delay 20.0 ms;
+   }
+}
+
