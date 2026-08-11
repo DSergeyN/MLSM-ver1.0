@@ -6,6 +6,7 @@
  */
 
 #define ATTEMPTS_BAL (3) /* Permissible attempts count to balance bags */
+#define ACCELERATION_DEFLATE_TIMEOUT (10000UL)
 
 #include "support.h"
 
@@ -925,6 +926,7 @@ uint8_t acceleration_side_support(uint8_t request){
 	static uint8_t inflate=(uint8_t)0U;
 	static uint8_t circuit=(uint8_t)_BACK_;
 	static uint8_t edited_sds=(uint8_t)0U;
+	static uint32_t deflate_notch=0UL;
 	uint8_t pressure;
 	uint8_t command;
 
@@ -940,7 +942,19 @@ uint8_t acceleration_side_support(uint8_t request){
 	else if(request^inflate){
 		/* First stop the current action before reversing air flow. */
 		inflate=request;
+		if(!inflate)deflate_notch=__get_millis;
 		state=(uint8_t)_ACC_PREPARE_;
+	}
+
+	/* Stop deflation after 10 seconds even if the pressure target was not reached. */
+	if((!inflate)&&(state!=(uint8_t)_ACC_IDLE_)&&
+	   (ms_from(deflate_notch)>=ACCELERATION_DEFLATE_TIMEOUT)){
+		if(!adjust_side_support((uint8_t)0U,(uint8_t)0U)){
+			drop_limits();
+			mem_status.edited_sds=edited_sds;
+			state=(uint8_t)_ACC_IDLE_;
+		}
+		return (state==(uint8_t)_ACC_IDLE_)?(uint8_t)0U:(uint8_t)1U;
 	}
 
 	switch(state){
