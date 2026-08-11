@@ -907,3 +907,91 @@ uint8_t adjust_side_support(uint8_t backrest, uint8_t cushion){
     }	
 	return (uint8_t)((!valid)||(feed_cmd_r|feed_cmd_l));
 }
+
+/*
+ * Active side support controlled by the LIN Side_Acceleration signal.
+ * The common pressure sensor can measure only one circuit at a time, so
+ * backrest and cushion are processed one after another.
+ */
+uint8_t acceleration_side_support(uint8_t request){
+	enum{
+		_ACC_IDLE_,
+		_ACC_PREPARE_,
+		_ACC_DRIVE_,
+		_ACC_STOP_,
+		_ACC_HOLD_
+	};
+	static uint8_t state=(uint8_t)_ACC_IDLE_;
+	static uint8_t inflate=(uint8_t)0U;
+	static uint8_t circuit=(uint8_t)_BACK_;
+	static uint8_t edited_sds=(uint8_t)0U;
+	uint8_t pressure;
+	uint8_t command;
+
+	request=(request==(uint8_t)1U)?(uint8_t)1U:(uint8_t)0U;
+
+	if(state==(uint8_t)_ACC_IDLE_){
+		if(!request)return (uint8_t)0U;
+		edited_sds=mem_status.edited_sds;
+		inflate=(uint8_t)1U;
+		circuit=(uint8_t)_BACK_;
+		state=(uint8_t)_ACC_PREPARE_;
+	}
+	else if(request^inflate){
+		/* First stop the current action before reversing air flow. */
+		inflate=request;
+		state=(uint8_t)_ACC_PREPARE_;
+	}
+
+	switch(state){
+		case (uint8_t)_ACC_PREPARE_:
+			if(!adjust_side_support((uint8_t)0U,(uint8_t)0U)){
+				circuit=(uint8_t)_BACK_;
+				state=(uint8_t)_ACC_DRIVE_;
+			}
+		break;
+
+		case (uint8_t)_ACC_DRIVE_:
+			pressure=(circuit==(uint8_t)_BACK_)?
+					 sides_pr.backrest:sides_pr.cushion;
+			if((inflate&&(pressure>=MAX_BAG_PRESS))||
+			   ((!inflate)&&(pressure<=AEM_BAG_PRESS))){
+				state=(uint8_t)_ACC_STOP_;
+			}
+			else{
+				command=inflate?(uint8_t)1U:(uint8_t)2U;
+				if(circuit==(uint8_t)_BACK_){
+					(void)adjust_side_support(command,(uint8_t)0U);
+				}
+				else{
+					(void)adjust_side_support((uint8_t)0U,command);
+				}
+			}
+		break;
+
+		case (uint8_t)_ACC_STOP_:
+			if(!adjust_side_support((uint8_t)0U,(uint8_t)0U)){
+				if(!inflate){
+					if(circuit==(uint8_t)_BACK_)sides_pr.backrest=(uint8_t)0U;
+					else sides_pr.cushion=(uint8_t)0U;
+				}
+				if(circuit==(uint8_t)_BACK_){
+					circuit=(uint8_t)_CUSH_;
+					state=(uint8_t)_ACC_DRIVE_;
+				}
+				else if(inflate)state=(uint8_t)_ACC_HOLD_;
+				else{
+					drop_limits();
+					mem_status.edited_sds=edited_sds;
+					state=(uint8_t)_ACC_IDLE_;
+				}
+			}
+		break;
+
+		case (uint8_t)_ACC_HOLD_:
+		default:
+		break;
+	}
+
+	return (state==(uint8_t)_ACC_IDLE_)?(uint8_t)0U:(uint8_t)1U;
+}
