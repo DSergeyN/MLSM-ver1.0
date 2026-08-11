@@ -9,9 +9,14 @@
 #define ACCELERATION_DEFLATE_TIMEOUT (10000UL)
 
 #include "support.h"
+#include "projDefines.h"
 
 sides_pr_t sides_pr;
 extern bool side_mem_lin_enable;
+
+#ifdef DEBUG
+static uint8_t MyPressure;
+#endif
 
 static struct{
 	uint8_t b_latch;
@@ -772,6 +777,9 @@ uint8_t adjust_side_support(uint8_t backrest, uint8_t cushion){
 						p_run=(uint8_t)1U;
 						msg_1R.valve.backrest_l=msg_1R.valve.backrest_r=(uint8_t)1U;
 						if(valid)sides_pr.backrest=slide;
+#ifdef DEBUG
+						MyPressure = slide;
+#endif 
 						if(limit.b_latch){
 							if(sides_pr.backrest<
 							  ((MAX_BAG_PRESS-PR_HYSTERESIS)-limit.b_dempfer)){
@@ -797,6 +805,9 @@ uint8_t adjust_side_support(uint8_t backrest, uint8_t cushion){
 						msg_1R.valve.backrest_l=msg_1R.valve.backrest_r=(uint8_t)1U;
 						msg_1R.valve.drain=(uint8_t)1U;
 						if(valid)sides_pr.backrest=__get_drop_pressure(slide);
+#ifdef DEBUG
+						MyPressure = slide;
+#endif 
 					break;
 					default: break;
 				}

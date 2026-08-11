@@ -103,6 +103,7 @@ bool side_mem_lin_enable;
 /** 
  * @Brief Assemble and assert diagnostic reply
  */
+#if (0)
 static uint8_t internal_diagnostics(void){
 	/****/
 	static uint8_t diag_last=(uint8_t)0U;
@@ -216,6 +217,7 @@ static uint8_t internal_diagnostics(void){
 	/****/
 	return (uint8_t)0U;
 }
+#endif
 
 uint8_t command_extract(void){
 	
@@ -560,7 +562,7 @@ void command_execute(void){
 		
 
 		
-		if(lumbar_st.memory^input.set.MemNumber){
+		if((!acceleration_mode)&&(lumbar_st.memory^input.set.MemNumber)){
 			if(!(massage_st.msg_on)){
 				lumbar_st.memory=input.set.MemNumber;
 				if(input.any_key||lumbar_st.active){
