@@ -179,7 +179,7 @@ static uint8_t internal_diagnostics(void){
 		break;
 		case Seat_side_support_request_status:
 			diagnostics.outbox=input.pne.Sidesupport_on?
-					(input.pne.Side_Acceleration?((uint8_t)0x02U):((uint8_t)0x01U)):((uint8_t)0x00U);
+					((input.pne.Side_Acceleration==(int8_t)1)?((uint8_t)0x02U):((uint8_t)0x01U)):((uint8_t)0x00U);
 			diagnostics.outbox|=(input.pne.Sidesupport_backrest&((uint8_t)0x03U))<<((uint8_t)2U);
 			diagnostics.outbox|=(input.pne.Sidesupport_backrest&((uint8_t)0x03U))<<((uint8_t)4U);
 			l_u8_wr_LI0_Data_Register(diagnostics.outbox);
@@ -459,7 +459,8 @@ uint8_t command_extract(void){
 	status=status;
 #else
 	if(transit){
-		if(!(lumbar_st.active||massage_st.msg_on)){
+		if(!(lumbar_st.active||massage_st.msg_on||
+		     side_s_st.active||side_s_st.transit)){
 			if(transit==(uint8_t)2U){
 				if(!operation_mode(_OFF_,(uint8_t)0U)){
 					status=transit=(uint8_t)0U;
@@ -528,6 +529,8 @@ uint8_t command_extract(void){
 		}
 		/*********************/
 		if(input.pne.Massage_on)input.pne.Massage_on=(uint8_t)0U;
+		/* Stop active side support before entering sleep mode. */
+		input.pne.Side_Acceleration=(int8_t)0;
 	}
 #endif
 	/* This is temporary code for initial testing as demo firmware */
@@ -539,8 +542,13 @@ void command_execute(void){
 	static uint8_t msg_toggle=(uint8_t)0U;
 	static uint8_t adj_access=(uint8_t)0U;
 	static uint8_t mem_s_flag=(uint8_t)0U;
+	static uint8_t acceleration_mode=(uint8_t)0U;
+	static uint8_t acceleration_started=(uint8_t)0U;
 	static uint32_t notch=0UL;
 	static bool side_support_activated = FALSE;
+	uint8_t acceleration_request=
+		(input.pne.Side_Acceleration==(int8_t)1)?(uint8_t)1U:(uint8_t)0U;
+	if(acceleration_request)acceleration_mode=(uint8_t)1U;
 	/***/
 	if(input.any_key||input.any_cmd||adj_access){
 		if(input.any_key||input.any_cmd){
@@ -553,7 +561,7 @@ void command_execute(void){
 		
 
 		
-		if(lumbar_st.memory^input.set.MemNumber){
+		if((!acceleration_mode)&&(lumbar_st.memory^input.set.MemNumber)){
 			if(!(massage_st.msg_on)){
 				lumbar_st.memory=input.set.MemNumber;
 				if(input.any_key||lumbar_st.active){
@@ -562,7 +570,7 @@ void command_execute(void){
 			}	
 		}
 		/* 21_02_2023 update */
-		if(side_s_st.memory^input.set.MemNumber){
+		if((!acceleration_mode)&&(side_s_st.memory^input.set.MemNumber)){
 			if(!(massage_st.msg_on)){
 				side_s_st.memory=input.set.MemNumber;
 				if(input.any_cmd||side_s_st.active){
@@ -576,13 +584,13 @@ void command_execute(void){
 		
 	}
 	/* Memory transit updates */
-	else if(lumbar_st.memory^input.set.MemNumber){
+	else if((!acceleration_mode)&&(lumbar_st.memory^input.set.MemNumber)){
 		if(!(massage_st.msg_on))lumbar_st.memory=input.set.MemNumber; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		msg_toggle=(uint8_t)0U;
 	}
 	/* Memory transit updates */
 	/* 21_02_2023 update */
-	else if(side_s_st.memory^input.set.MemNumber){
+	else if((!acceleration_mode)&&(side_s_st.memory^input.set.MemNumber)){
 		if(!(massage_st.msg_on))side_s_st.memory=input.set.MemNumber; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		msg_toggle=(uint8_t)0U;
 	}
@@ -624,8 +632,18 @@ void command_execute(void){
 		lumbar_st.transit=apply_lumbar(3,input.any_key);
 	}
 #else
+	/* Stop memory transitions which share the pump before active support. */
+	if(acceleration_mode&&side_s_st.transit){
+		side_s_st.transit=
+			apply_side_support(side_s_st.memory,(uint8_t)1U);
+	}
+	if(acceleration_mode&&lumbar_st.transit){
+		lumbar_st.transit=
+			apply_lumbar(lumbar_st.memory,(uint8_t)1U);
+	}
+
 	if((lumbar_st.active||lumbar_st.transit)||
-	   (side_s_st.active||side_s_st.transit)){
+	   (side_s_st.active||side_s_st.transit)||acceleration_mode){
 		massage_st.msg_on=msg_run((uint8_t)0U);
 	}
 	else{
@@ -642,14 +660,28 @@ void command_execute(void){
 	}
 	if(!((massage_st.msg_on||lumbar_st.transit)||
 		  (side_s_st.active||side_s_st.transit))){
-		lumbar_st.active=adjust_lumbar(input.key.LumbarCtrUp,
-									   input.key.LumbarCtrDown,
-									   input.key.LumbarCtrIncrease,
-									   input.key.LumbarCtrDecrease);
+		lumbar_st.active=adjust_lumbar(acceleration_mode?(uint8_t)0U:input.key.LumbarCtrUp,
+									   acceleration_mode?(uint8_t)0U:input.key.LumbarCtrDown,
+									   acceleration_mode?(uint8_t)0U:input.key.LumbarCtrIncrease,
+									   acceleration_mode?(uint8_t)0U:input.key.LumbarCtrDecrease);
 	}
 	if(!((massage_st.msg_on||side_s_st.transit)||
 		  (lumbar_st.active||lumbar_st.transit))){
-		if(input.pne.Sidesupport_on){
+		if(acceleration_mode){
+			if(!acceleration_started){
+				/* Let the original controller close its valves first. */
+				side_s_st.active=adjust_side_support((uint8_t)0U,(uint8_t)0U);
+				if(!side_s_st.active)acceleration_started=(uint8_t)1U;
+			}
+			else{
+				side_s_st.active=acceleration_side_support(acceleration_request);
+				if(!side_s_st.active){
+					acceleration_started=(uint8_t)0U;
+					acceleration_mode=(uint8_t)0U;
+				}
+			}
+		}
+		else if(input.pne.Sidesupport_on){
 			side_s_st.active=
 				adjust_side_support(input.pne.Sidesupport_backrest,
 									input.pne.Sidesupport_cushion);	
@@ -658,11 +690,13 @@ void command_execute(void){
 			side_s_st.active=adjust_side_support((uint8_t)0U,(uint8_t)0U);	
 		}
 	}
-	if(!((massage_st.msg_on||lumbar_st.active)||
+	if((!acceleration_mode)&&
+	   !((massage_st.msg_on||lumbar_st.active)||
 		 (side_s_st.transit||side_s_st.active))){
 		lumbar_st.transit=apply_lumbar(lumbar_st.memory,input.any_key);
 	}
-	if(!((massage_st.msg_on||side_s_st.active)||
+	if((!acceleration_mode)&&
+	   !((massage_st.msg_on||side_s_st.active)||
 		 (lumbar_st.transit||lumbar_st.active))){
 		if(input.pne.Sidesupport_on)
 		{

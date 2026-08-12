@@ -6,6 +6,7 @@
  */
 
 #define ATTEMPTS_BAL (3) /* Permissible attempts count to balance bags */
+#define ACCELERATION_DEFLATE_TIMEOUT (10000UL)
 
 #include "support.h"
 
@@ -906,4 +907,140 @@ uint8_t adjust_side_support(uint8_t backrest, uint8_t cushion){
 		}		
     }	
 	return (uint8_t)((!valid)||(feed_cmd_r|feed_cmd_l));
+}
+
+/*
+ * Inflate or deflate backrest and cushion side-support channels together.
+ * This state machine owns the side-support valves while it is active and
+ * intentionally does not use adjust_side_support().
+ */
+uint8_t acceleration_side_support(uint8_t request){
+	enum{
+		_ACC_IDLE_,
+		_ACC_STOP_R_,
+		_ACC_STOP_L_,
+		_ACC_AFTER_STOP_,
+		_ACC_OPEN_R_,
+		_ACC_OPEN_L_,
+		_ACC_SETTLE_,
+		_ACC_RUN_,
+		_ACC_HOLD_
+	};
+	enum{
+		_ACC_NEXT_START_,
+		_ACC_NEXT_HOLD_,
+		_ACC_NEXT_IDLE_
+	};
+	static uint8_t state=(uint8_t)_ACC_IDLE_;
+	static uint8_t target=(uint8_t)0U;
+	static uint8_t next=(uint8_t)_ACC_NEXT_START_;
+	static uint8_t pressure=(uint8_t)0U;
+	static uint8_t edited_sds=(uint8_t)0U;
+	static uint32_t action_notch=0UL;
+	static uint32_t deflate_notch=0UL;
+	uint32_t elapsed;
+
+	request=(request==(uint8_t)1U)?(uint8_t)1U:(uint8_t)0U;
+
+	if(state==(uint8_t)_ACC_IDLE_){
+		if(!request)return (uint8_t)0U;
+		edited_sds=mem_status.edited_sds;
+		target=(uint8_t)1U;
+		next=(uint8_t)_ACC_NEXT_START_;
+		state=(uint8_t)_ACC_STOP_R_;
+	}
+	else if(request^target){
+		target=request;
+		if(!target)deflate_notch=__get_millis;
+		next=(uint8_t)_ACC_NEXT_START_;
+		pump_force(MIN_DUTY);
+		state=(uint8_t)_ACC_STOP_R_;
+	}
+
+	if((!target)&&(next!=(uint8_t)_ACC_NEXT_IDLE_)&&
+	   (ms_from(deflate_notch)>=ACCELERATION_DEFLATE_TIMEOUT)){
+		next=(uint8_t)_ACC_NEXT_IDLE_;
+		pump_force(MIN_DUTY);
+		state=(uint8_t)_ACC_STOP_R_;
+	}
+
+	if(__SPI_STATE->busy)return (uint8_t)1U;
+
+	switch(state){
+		case (uint8_t)_ACC_STOP_R_:
+			pump_force(MIN_DUTY);
+			msg_1R.feed_cmd=msg_2L.feed_cmd=(uint8_t)0U;
+			spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+			state=(uint8_t)_ACC_STOP_L_;
+		break;
+
+		case (uint8_t)_ACC_STOP_L_:
+			spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
+			state=(uint8_t)_ACC_AFTER_STOP_;
+		break;
+
+		case (uint8_t)_ACC_AFTER_STOP_:
+			if(next==(uint8_t)_ACC_NEXT_HOLD_){
+				state=(uint8_t)_ACC_HOLD_;
+			}
+			else if(next==(uint8_t)_ACC_NEXT_IDLE_){
+				drop_limits();
+				mem_status.edited_sds=edited_sds;
+				state=(uint8_t)_ACC_IDLE_;
+			}
+			else state=(uint8_t)_ACC_OPEN_L_;
+		break;
+
+		case (uint8_t)_ACC_OPEN_L_:
+			msg_1R.feed_cmd=msg_2L.feed_cmd=(uint8_t)0U;
+			msg_1R.valve.backrest_l=msg_1R.valve.backrest_r=(uint8_t)1U;
+			msg_2L.valve.cushion_l=msg_2L.valve.cushion_r=(uint8_t)1U;
+			if(!target)msg_1R.valve.drain=(uint8_t)1U;
+			spi_tx_word(_L_SIDE,SPI_CMD_VALVE|(uint16_t)msg_2L.feed_cmd);
+			state=(uint8_t)_ACC_OPEN_R_;
+		break;
+
+		case (uint8_t)_ACC_OPEN_R_:
+			spi_tx_word(_R_SIDE,SPI_CMD_VALVE|(uint16_t)msg_1R.feed_cmd);
+			pressure_hoarder((uint8_t)0U,_TRIG_);
+			action_notch=__get_millis;
+			state=(uint8_t)_ACC_SETTLE_;
+		break;
+
+		case (uint8_t)_ACC_SETTLE_:
+			pressure=pressure_hoarder(MAX_BAG_PRESS,_RUN_);
+			elapsed=ms_from(action_notch);
+			if(target){
+				if(elapsed>ISOLATE_PUMP_W){
+					pump_force(MAX_DUTY);
+					state=(uint8_t)_ACC_RUN_;
+				}
+			}
+			else if(elapsed>ISOLATE_P_SENS){
+				state=(uint8_t)_ACC_RUN_;
+			}
+		break;
+
+		case (uint8_t)_ACC_RUN_:
+			pressure=pressure_hoarder(MAX_BAG_PRESS,_RUN_);
+			sides_pr.backrest=sides_pr.cushion=pressure;
+			if(target&&(pressure>=MAX_BAG_PRESS)){
+				sides_pr.backrest=sides_pr.cushion=MAX_BAG_PRESS;
+				next=(uint8_t)_ACC_NEXT_HOLD_;
+				pump_force(MIN_DUTY);
+				state=(uint8_t)_ACC_STOP_R_;
+			}
+			else if((!target)&&(pressure<=AEM_BAG_PRESS)){
+				next=(uint8_t)_ACC_NEXT_IDLE_;
+				state=(uint8_t)_ACC_STOP_R_;
+			}
+		break;
+
+		case (uint8_t)_ACC_HOLD_:
+		case (uint8_t)_ACC_IDLE_:
+		default:
+		break;
+	}
+
+	return (state==(uint8_t)_ACC_IDLE_)?(uint8_t)0U:(uint8_t)1U;
 }
