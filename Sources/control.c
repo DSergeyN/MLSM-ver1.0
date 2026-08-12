@@ -583,7 +583,7 @@ void command_execute(void){
 		
 	}
 	/* Memory transit updates */
-	else if(lumbar_st.memory^input.set.MemNumber){
+	else if((!acceleration_mode)&&(lumbar_st.memory^input.set.MemNumber)){
 		if(!(massage_st.msg_on))lumbar_st.memory=input.set.MemNumber; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		msg_toggle=(uint8_t)0U;
 	}
@@ -669,6 +669,7 @@ void command_execute(void){
 		  (lumbar_st.active||lumbar_st.transit))){
 		if(acceleration_mode){
 			side_s_st.active=acceleration_side_support(acceleration_request);
+			acceleration_mode = side_s_st.active ? 1 : 0;
 		}
 		else if(input.pne.Sidesupport_on){
 			side_s_st.active=
