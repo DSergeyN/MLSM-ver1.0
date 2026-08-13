@@ -980,7 +980,7 @@ uint8_t acceleration_side_support(uint8_t request){
 			pressure=(circuit==(uint8_t)_BACK_)?
 					 sides_pr.backrest:sides_pr.cushion;
 			if((inflate&&(pressure>=MAX_BAG_PRESS))||
-			   ((!inflate)&&(pressure<=AEM_BAG_PRESS))){
+			   ((!inflate)&&(pressure<=FLT_BAG_PRESS))){
 				state=(uint8_t)_ACC_STOP_;
 			}
 			else{
