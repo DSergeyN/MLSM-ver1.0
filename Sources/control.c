@@ -96,6 +96,9 @@ struct{
 static uint16_t test_lin;
 bool side_mem_lin_enable;
 
+extern bool pump_for_side_accelrt;	
+
+
 /* Debug variables */
 
 /*******************/
@@ -547,9 +550,24 @@ void command_execute(void){
 	static uint8_t acceleration_mode=(uint8_t)0U;
 	static uint32_t notch=0UL;
 	static bool side_support_activated = FALSE;
-	uint8_t acceleration_request=
-		(input.pne.Side_Acceleration==(int8_t)1)?(uint8_t)1U:(uint8_t)0U;
-	if(acceleration_request)acceleration_mode=(uint8_t)1U;
+	uint8_t acceleration_request = (input.pne.Side_Acceleration==(int8_t)1)?(uint8_t)1U:(uint8_t)0U;	
+	//uint8_t fuction_msg_lumbar = !pump_for_side_accelrt && acceleration_request;
+	
+	
+	
+	if((acceleration_request && !acceleration_mode && !pump_for_side_accelrt))
+	{
+		acceleration_mode=(uint8_t)1U;		
+	}
+	else if (acceleration_mode && pump_for_side_accelrt)
+		acceleration_mode = 0;
+	else if ( pump_for_side_accelrt && !acceleration_request)
+	{
+		acceleration_mode=(uint8_t)1U;
+		pump_for_side_accelrt	= FALSE;
+	}
+	
+	
 	/***/
 	if(input.any_key||input.any_cmd||adj_access){
 		if(input.any_key||input.any_cmd){
@@ -645,7 +663,7 @@ void command_execute(void){
 	}
 
 	if((lumbar_st.active||lumbar_st.transit)||
-	   (side_s_st.active||side_s_st.transit)||acceleration_request){
+	   (side_s_st.active||side_s_st.transit)||acceleration_mode){
 		massage_st.msg_on=msg_run((uint8_t)0U);
 	}
 	else{
@@ -662,10 +680,10 @@ void command_execute(void){
 	}
 	if(!((massage_st.msg_on||lumbar_st.transit)||
 		  (side_s_st.active||side_s_st.transit))){
-		lumbar_st.active=adjust_lumbar(acceleration_request?(uint8_t)0U:input.key.LumbarCtrUp,
-									   acceleration_request?(uint8_t)0U:input.key.LumbarCtrDown,
-									   acceleration_request?(uint8_t)0U:input.key.LumbarCtrIncrease,
-									   acceleration_request?(uint8_t)0U:input.key.LumbarCtrDecrease);
+		lumbar_st.active=adjust_lumbar(acceleration_mode?(uint8_t)0U:input.key.LumbarCtrUp,
+									   acceleration_mode?(uint8_t)0U:input.key.LumbarCtrDown,
+									   acceleration_mode?(uint8_t)0U:input.key.LumbarCtrIncrease,
+									   acceleration_mode?(uint8_t)0U:input.key.LumbarCtrDecrease);
 	}
 	if(!((massage_st.msg_on||side_s_st.transit)||
 		  (lumbar_st.active||lumbar_st.transit))){
@@ -682,7 +700,7 @@ void command_execute(void){
 			side_s_st.active=adjust_side_support((uint8_t)0U,(uint8_t)0U);	
 		}
 	}
-	if((!acceleration_request)&&
+	if((!acceleration_mode)&&
 	   !((massage_st.msg_on||lumbar_st.active)||
 		 (side_s_st.transit||side_s_st.active))){
 		lumbar_st.transit=apply_lumbar(lumbar_st.memory,input.any_key);

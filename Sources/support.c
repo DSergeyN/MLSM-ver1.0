@@ -55,6 +55,10 @@ uint16_t moment_pr;
 #endif
 /*************************************/
 
+
+bool pump_for_side_accelrt;		// True means pressure is reached, valves are closed
+
+
 /**
  * @Brief Balance backrest or cushion bags if a significant mismatch found
  */
@@ -942,6 +946,12 @@ uint8_t acceleration_side_support(uint8_t request){
 	uint8_t command;
 
 	request=(request==(uint8_t)1U)?(uint8_t)1U:(uint8_t)0U;
+	
+	if (!request && pump_for_side_accelrt)
+		pump_for_side_accelrt = FALSE;
+		
+	
+	
 
 	if(state==(uint8_t)_ACC_IDLE_){
 		if(!request)return (uint8_t)0U;
@@ -1004,7 +1014,11 @@ uint8_t acceleration_side_support(uint8_t request){
 					circuit=(uint8_t)_CUSH_;
 					state=(uint8_t)_ACC_DRIVE_;
 				}
-				else if(inflate)state=(uint8_t)_ACC_HOLD_;
+				else if(inflate)
+				{
+					state=(uint8_t)_ACC_HOLD_;
+					pump_for_side_accelrt = TRUE;
+				}
 				else{
 					drop_limits();
 					mem_status.edited_sds=edited_sds;
