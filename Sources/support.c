@@ -929,108 +929,102 @@ uint8_t adjust_side_support(uint8_t backrest, uint8_t cushion){
  * The common pressure sensor can measure only one circuit at a time, so
  * backrest and cushion are processed one after another.
  */
-uint8_t acceleration_side_support(uint8_t request){
-	enum{
-		_ACC_IDLE_,
-		_ACC_PREPARE_,
-		_ACC_DRIVE_,
-		_ACC_STOP_,
-		_ACC_HOLD_
+uint8_t acceleration_side_support(uint8_t request) {
+	enum {
+		ACC_IDLE,
+		ACC_PREPARE,
+		ACC_DRIVE,
+		ACC_STOP,
+		ACC_HOLD
 	};
-	static uint8_t state=(uint8_t)_ACC_IDLE_;
-	static uint8_t inflate=(uint8_t)0U;
-	static uint8_t circuit=(uint8_t)_BACK_;
-	static uint8_t edited_sds=(uint8_t)0U;
-	static uint32_t deflate_notch=0UL;
+	static uint8_t state = ACC_IDLE;
+	static uint8_t inflate = 0U;
+	static uint8_t circuit = _BACK_;
+	static uint32_t deflate_notch = 0UL;
 	uint8_t pressure;
 	uint8_t command;
 
-	request=(request==(uint8_t)1U)?(uint8_t)1U:(uint8_t)0U;
-	
+	request = (request == 1U) ? 1U : 0U;
+
 	if (!request && pump_for_side_accelrt)
 		pump_for_side_accelrt = FALSE;
-		
-	
-	
 
-	if(state==(uint8_t)_ACC_IDLE_){
-		if(!request)return (uint8_t)0U;
-		edited_sds=mem_status.edited_sds;
-		inflate=(uint8_t)1U;
-		circuit=(uint8_t)_BACK_;
-		state=(uint8_t)_ACC_PREPARE_;
-	}
-	else if(request^inflate){
+	if (state == ACC_IDLE) {
+		if (!request)
+			return 0U;
+
+		inflate = 1U;
+		circuit = _BACK_;
+		state = ACC_PREPARE;
+	} else if (request ^ inflate) {
 		/* First stop the current action before reversing air flow. */
-		inflate=request;
-		if(!inflate)deflate_notch=__get_millis;
-		state=(uint8_t)_ACC_PREPARE_;
+		inflate = request;
+		if (!inflate)
+			deflate_notch = __get_millis;
+		state = ACC_PREPARE;
 	}
 
 	/* Stop deflation after 10 seconds even if the pressure target was not reached. */
-	if((!inflate)&&(state!=(uint8_t)_ACC_IDLE_)&&
-	   (ms_from(deflate_notch)>=ACCELERATION_DEFLATE_TIMEOUT)){
-		if(!adjust_side_support((uint8_t)0U,(uint8_t)0U)){
+	if ((!inflate) && (state != ACC_IDLE)
+			&& (ms_from(deflate_notch) >= ACCELERATION_DEFLATE_TIMEOUT)) {
+		if (!adjust_side_support(0U, 0U)) {
 			drop_limits();
-			mem_status.edited_sds=edited_sds;
-			state=(uint8_t)_ACC_IDLE_;
+			state = ACC_IDLE;
 		}
-		return (state==(uint8_t)_ACC_IDLE_)?(uint8_t)0U:(uint8_t)1U;
+		return (state == ACC_IDLE) ? 0U : 1U;
 	}
 
-	switch(state){
-		case (uint8_t)_ACC_PREPARE_:
-			if(!adjust_side_support((uint8_t)0U,(uint8_t)0U)){
-				circuit=(uint8_t)_BACK_;
-				state=(uint8_t)_ACC_DRIVE_;
-			}
+	switch (state) {
+	case ACC_PREPARE:
+		if (!adjust_side_support(0U, 0U)) {
+			circuit = _BACK_;
+			state = ACC_DRIVE;
+		}
 		break;
 
-		case (uint8_t)_ACC_DRIVE_:
-			pressure=(circuit==(uint8_t)_BACK_)?
-					 sides_pr.backrest:sides_pr.cushion;
-			if((inflate&&(pressure>=MAX_BAG_PRESS))||
-			   ((!inflate)&&(pressure<=FLT_BAG_PRESS))){
-				state=(uint8_t)_ACC_STOP_;
-			}
-			else{
-				command=inflate?(uint8_t)1U:(uint8_t)2U;
-				if(circuit==(uint8_t)_BACK_){
-					(void)adjust_side_support(command,(uint8_t)0U);
-				}
-				else{
-					(void)adjust_side_support((uint8_t)0U,command);
-				}
-			}
-		break;
-
-		case (uint8_t)_ACC_STOP_:
-			if(!adjust_side_support((uint8_t)0U,(uint8_t)0U)){
-				if(!inflate){
-					if(circuit==(uint8_t)_BACK_)sides_pr.backrest=(uint8_t)0U;
-					else sides_pr.cushion=(uint8_t)0U;
-				}
-				if(circuit==(uint8_t)_BACK_){
-					circuit=(uint8_t)_CUSH_;
-					state=(uint8_t)_ACC_DRIVE_;
-				}
-				else if(inflate)
-				{
-					state=(uint8_t)_ACC_HOLD_;
-					pump_for_side_accelrt = TRUE;
-				}
-				else{
-					drop_limits();
-					mem_status.edited_sds=edited_sds;
-					state=(uint8_t)_ACC_IDLE_;
-				}
-			}
-		break;
-
-		case (uint8_t)_ACC_HOLD_:
-		default:
-		break;
+	case ACC_DRIVE:
+		pressure = (circuit == _BACK_) ? sides_pr.backrest : sides_pr.cushion;
+		if ((inflate && (pressure >= MAX_BAG_PRESS ))||
+		((!inflate)&&(pressure<=FLT_BAG_PRESS))){
+		state=ACC_STOP;
 	}
+	else {
+		command=inflate?1U:2U;
+		if(circuit==_BACK_) {
+			(void)adjust_side_support(command,0U);
+		}
+		else {
+			(void)adjust_side_support(0U,command);
+		}
+	}
+	break;
 
-	return (state==(uint8_t)_ACC_IDLE_)?(uint8_t)0U:(uint8_t)1U;
+	case ACC_STOP:
+	if(!adjust_side_support(0U,0U)) {
+		if(!inflate) {
+			if(circuit==_BACK_)sides_pr.backrest=0U;
+			else sides_pr.cushion=0U;
+		}
+		if(circuit==_BACK_) {
+			circuit=_CUSH_;
+			state=ACC_DRIVE;
+		}
+		else if(inflate)
+		{
+			state=ACC_HOLD;
+			pump_for_side_accelrt = TRUE;
+		}
+		else {
+			drop_limits();
+			state=ACC_IDLE;
+		}
+	}
+	break;
+
+	case ACC_HOLD:
+	default:
+	break;
+}
+
+	return (state == ACC_IDLE) ? 0U : 1U;
 }
